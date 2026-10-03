@@ -1,0 +1,11 @@
+# 小鲸鱼桌宠 · 运行依赖
+#
+# 只需要 PySide6-Essentials：QtMultimedia 用不上（音效走 Windows 原生 MCI），
+# QtQml / QtQuick / QtNetwork 等也都不需要，装 Essentials 比装完整 PySide6 小得多。
+#
+#   python -m pip install -r requirements.txt
+#
+# 国内网络慢可以加清华源：
+#   python -m pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+PySide6-Essentials>=6.7,<7

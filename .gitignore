@@ -1,0 +1,39 @@
+# ---- 运行时生成的文件（每个用户本地都不一样，不要提交） ----
+config.json
+pet.pid
+*.log
+
+# ---- 打包产物 ----
+build/
+dist/
+*.spec
+
+# 便携版压缩包：放在仓库根目录，且从 dist/ 的忽略规则里放行。
+# build.bat 打好包后会自动复制一份到这里，方便直接提交/上传。
+!Whale-Pet-Portable.zip
+
+# 注意：zip 有 20+ MB，提交进 git 历史会让仓库变臃肿，而且每次发版都要先删旧的
+# 再传新的。如果嫌麻烦就把下面这行的注释去掉，改为只用 Release 附件分发。
+# Whale-Pet-Portable.zip
+
+# ---- 自检脚本生成的截图 ----
+tools/_*.png
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# ---- 编辑器 / 系统 ----
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+
+# ---- 素材：可以放你自己的形象和音效，但要自己确认有权分发 ----
+# 如果你不想把本地素材提交上来，取消下面两行的注释：
+# assets/skins/
+# assets/sounds/
