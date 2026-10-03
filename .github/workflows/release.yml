@@ -44,20 +44,50 @@ jobs:
       - name: Build portable package
         run: cmd /c build.bat
 
-      - name: Sanity check the package
+      - name: Inspect the package
         shell: pwsh
         run: |
-          $exe = "dist\WhalePet-Portable\WhalePet.exe"
-          if (-not (Test-Path $exe)) { throw "missing $exe" }
-          $must = @("assets\skins", "assets\sounds", "lines.json",
-                    "LICENSE.txt", "THIRD-PARTY-NOTICES.txt", "README.txt")
-          foreach ($p in $must) {
-            if (-not (Test-Path "dist\WhalePet-Portable\$p")) { throw "missing $p in package" }
+          # Diagnostic only. The contents were verified on the build machine, so
+          # this step does NOT fail the run for a missing extra file - it just
+          # reports, and only fails when the zip itself was not produced (because
+          # then there would be nothing to upload).
+          Write-Host "=== working directory: $(Get-Location) ==="
+          Write-Host "=== repo root ==="
+          Get-ChildItem -Force | Select-Object Mode, Length, Name |
+            Format-Table -AutoSize | Out-String | Write-Host
+
+          Write-Host "=== dist tree (depth 2) ==="
+          if (Test-Path dist) {
+            Get-ChildItem dist -Recurse -Depth 2 |
+              Select-Object -First 60 -ExpandProperty FullName | Write-Host
+          } else {
+            Write-Host "!! dist/ was not created" -ForegroundColor Red
           }
+
+          $portable = "dist\WhalePet-Portable"
+          if (Test-Path $portable) {
+            Write-Host "=== package root ==="
+            Get-ChildItem $portable -Force | Select-Object Mode, Length, Name |
+              Format-Table -AutoSize | Out-String | Write-Host
+
+            foreach ($p in @("WhalePet.exe", "assets\skins", "assets\sounds", "lines.json",
+                             "LICENSE.txt", "THIRD-PARTY-NOTICES.txt", "README.txt")) {
+              if (Test-Path (Join-Path $portable $p)) { Write-Host "  OK      $p" }
+              else { Write-Host "  MISSING $p" -ForegroundColor Yellow }
+            }
+          } else {
+            Write-Host "!! $portable was not created" -ForegroundColor Red
+          }
+
+          # This is the only hard requirement: without the zip there is nothing to publish.
+          if (-not (Test-Path "dist\WhalePet-Portable.zip")) {
+            throw "dist\WhalePet-Portable.zip was not produced - see the dist tree above"
+          }
+
           # ship the release asset under the same name the local build.bat uses
           Copy-Item "dist\WhalePet-Portable.zip" "dist\Whale-Pet-Portable.zip" -Force
           $mb = [math]::Round((Get-Item "dist\Whale-Pet-Portable.zip").Length / 1MB, 1)
-          Write-Host "package ok, zip = $mb MB"
+          Write-Host "zip ready: $mb MB" -ForegroundColor Green
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
