@@ -79,15 +79,13 @@ jobs:
             Write-Host "!! $portable was not created" -ForegroundColor Red
           }
 
-          # This is the only hard requirement: without the zip there is nothing to publish.
-          if (-not (Test-Path "dist\WhalePet-Portable.zip")) {
-            throw "dist\WhalePet-Portable.zip was not produced - see the dist tree above"
+          # build.bat writes exactly this file; without it there is nothing to publish.
+          $zip = "dist\Whale-Pet-Portable.zip"
+          if (-not (Test-Path $zip)) {
+            throw "$zip was not produced - see the dist tree above"
           }
-
-          # ship the release asset under the same name the local build.bat uses
-          Copy-Item "dist\WhalePet-Portable.zip" "dist\Whale-Pet-Portable.zip" -Force
-          $mb = [math]::Round((Get-Item "dist\Whale-Pet-Portable.zip").Length / 1MB, 1)
-          Write-Host "zip ready: $mb MB" -ForegroundColor Green
+          $mb = [math]::Round((Get-Item $zip).Length / 1MB, 1)
+          Write-Host "zip ready: $zip  ($mb MB)" -ForegroundColor Green
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
