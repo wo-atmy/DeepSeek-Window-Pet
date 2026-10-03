@@ -1,0 +1,86 @@
+name: Release portable build
+
+# 触发方式（任选一种）：
+#
+#   A. 网页上点一下（不会 git 用这个）：
+#      GitHub 仓库页面 -> Actions -> 左边选 "Release portable build"
+#      -> 右边 "Run workflow" -> 绿色按钮
+#      跑完去 Actions 里点开这次运行，页面底部 Artifacts 里就能下到
+#      Whale-Pet-Portable.zip，手动拖到 Release 里当附件。
+#
+#   B. 打 tag 全自动（会 git 的话）：
+#      git tag v1.0.0 && git push origin v1.0.0
+#      会自动跑构建并直接建好 Release、把 zip 挂上去。
+#
+# 不管哪种方式，包里都是同一份东西：WhalePet.exe + assets + 说明书 + 授权文件。
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt pyinstaller
+
+      - name: Build portable package
+        run: cmd /c build.bat
+
+      - name: Sanity check the package
+        shell: pwsh
+        run: |
+          $exe = "dist\WhalePet-Portable\WhalePet.exe"
+          if (-not (Test-Path $exe)) { throw "missing $exe" }
+          $must = @("assets\skins", "assets\sounds", "lines.json",
+                    "LICENSE.txt", "THIRD-PARTY-NOTICES.txt", "README.txt")
+          foreach ($p in $must) {
+            if (-not (Test-Path "dist\WhalePet-Portable\$p")) { throw "missing $p in package" }
+          }
+          # ship the release asset under the same name the local build.bat uses
+          Copy-Item "dist\WhalePet-Portable.zip" "dist\Whale-Pet-Portable.zip" -Force
+          $mb = [math]::Round((Get-Item "dist\Whale-Pet-Portable.zip").Length / 1MB, 1)
+          Write-Host "package ok, zip = $mb MB"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Whale-Pet-Portable
+          path: dist/Whale-Pet-Portable.zip
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/Whale-Pet-Portable.zip
+          generate_release_notes: true
+          body: |
+            下载 `Whale-Pet-Portable.zip`，解压后双击 `WhalePet.exe` 即可。
+
+            不需要安装 Python / PySide6，也不需要装 DSH 插件。
+            支持 Windows 10 / 11 64 位。
+
+            > 未签名的可执行文件，首次运行 Windows SmartScreen 可能提示"未知发布者"，选择"仍要运行"即可。
+
+            ---
+
+            Download `Whale-Pet-Portable.zip`, unzip it and run `WhalePet.exe`.
+            No Python / PySide6 / DSH plugin required. Windows 10 / 11 x64.
