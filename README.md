@@ -33,7 +33,7 @@
 </p>
 
 <p align="center">
-  <sub>用 <code>tools/selftest.py</code> 离屏渲染的真实效果：四档不同长度的台词，最后一张是「拖到左半边自动镜像」——
+  <sub>离屏渲染出的真实效果：四档不同长度的台词，最后一张是「拖到左半边自动镜像」——
   形象和气泡都翻转，<b>台词文字仍然正着读</b>。</sub>
 </p>
 
@@ -160,7 +160,7 @@ dist\Whale-Pet-Portable.zip    ← 或者直接拷这个压缩包
 
 打包含几个优化：`--onedir` 而不是 `--onefile`（onefile 每次启动都要解压 Qt 到临时目录，
 又慢又容易被杀软误报）；排除掉 QtQml / QtQuick / QtNetwork / QtSql / QtOpenGL 等没用的模块；
-删掉 Qt 自带的约 7 MB 翻译文件。exe 图标由 `tools/make_icon.py` 从形象图生成。
+删掉 Qt 自带的约 7 MB 翻译文件。exe 图标由默认形象裁切生成。
 
 代码里的 `app_dir()` 在冻结运行时取 **exe 自己的目录**（而不是 PyInstaller 的临时解包目录），
 所以 `config.json` / `lines.json` / `assets/` 都跟 exe 待在一起，整个文件夹搬走即可。
@@ -272,7 +272,7 @@ assets/sounds/
 
 | 内容 | 协议 | 能不能再分发 |
 |---|---|---|
-| 本项目的代码（`whale_pet.py` / `tools/`） | MIT (c) 2025 wo-atmy | ✅ 随便 |
+| 本项目的代码（`whale_pet.py`、脚本、文档） | MIT (c) 2025 wo-atmy | ✅ 随便 |
 | 合成音效 `assets/sounds/default/` | MIT (c) 2025 wo-atmy | ✅ 随便 |
 | 角色形象 `assets/skins/DSniang/` 与宣传图 `docs/images/hero.png` | ⚠️ **二次创作，不在 MIT 内** | ⚠️ 非本项目原创，不视为可自由再分发 |
 | 上游插件的**音效** | ❌ 不在 MIT 内 | ❌ **不能** |
@@ -280,10 +280,9 @@ assets/sounds/
 
 **具体说明：**
 
-- **代码**（`whale_pet.py`、`tools/`、脚本、文档）以 MIT 发布，随便用。
-- **音效** `assets/sounds/default/` 的两声提示音是
-  [`tools/make_placeholder_assets.py`](tools/make_placeholder_assets.py)
-  **合成的原创音频**，同样按 MIT 发布，可以随意替换、再分发。
+- **代码**（`whale_pet.py`、各脚本、文档）以 MIT 发布，随便用。
+- **音效** `assets/sounds/default/` 的两声提示音是**合成的原创音频**，
+  同样按 MIT 发布，可以随意替换、再分发。
 - **角色形象**（`assets/skins/DSniang/` 和 README 顶部的宣传图）是**基于上游角色
   形象的二次创作**，不是本项目原创，因此**不在 MIT 范围内**。
   想正式发布或商用，建议换成**你有完整权利**的作品
@@ -304,7 +303,7 @@ assets/sounds/
 ├── requirements.txt              # PySide6-Essentials
 ├── build.bat                     # 一键打包便携版
 ├── start-pet.bat / stop-pet.bat  # 源码方式启动 / 停止
-├── app.ico                       # exe 图标（由 tools/make_icon.py 生成）
+├── app.ico                       # exe 图标
 ├── README.md / README.en.md      # 中文 / 英文说明
 ├── CHANGELOG.md                  # 更新日志
 ├── LICENSE                       # MIT 协议
@@ -314,29 +313,20 @@ assets/sounds/
 ├── assets/                       # 素材
 │   ├── skins/                    #   ← 一个文件夹一个形象（DSniang 为默认形象）
 │   └── sounds/                   #   ← 一个文件夹一组音效
-├── docs/
-│   ├── portable-readme.txt       # 给便携版用户看的简版说明（会打进 zip）
-│   └── images/                   # README 用图（hero / 实际渲染效果）
-└── tools/
-    ├── make_icon.py               # 从形象图生成多尺寸 .ico
-    ├── make_placeholder_assets.py # 重新生成默认音效（形象缺失时补一个占位角色）
-    └── selftest.py                # 离屏自检：把窗口渲染成 PNG 验证绘制
+└── docs/
+    ├── portable-readme.txt       # 给便携版用户看的简版说明（会打进 zip）
+    └── images/                   # README 用图（hero / 实际渲染效果）
 ```
 
-运行时生成（已在 `.gitignore` 里）：`config.json`、`pet.pid`、
-`build/`、`dist/`、`tools/_*.png`。
+运行时生成（已在 `.gitignore` 里）：`config.json`、`pet.pid`、`build/`、`dist/`。
 
 ---
 
-## 🧪 自检
+## 🧪 关于绘制验证
 
-```bash
-python tools/selftest.py     # 渲染成 tools/_selftest*.png，检查绘制是否正确
-```
-
-> **不要用 `CopyFromScreen` 验证这类窗口**：Windows 的 DWM 合成层抓不全，
+> **不要用 `CopyFromScreen` 截图验证这类窗口**：Windows 的 DWM 合成层抓不全，
 > 白色泡体会被抓成半透明暗色、文字丢失 —— 看着像 bug，其实程序是对的。
-> 请用 `selftest.py` 的离屏 `grab()`。
+> 要检查绘制结果，用 `QWidget.grab()` 做离屏渲染（README 顶部那张效果图就是这么出的）。
 
 ---
 
